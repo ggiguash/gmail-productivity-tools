@@ -7,7 +7,7 @@ InboxSDK.load(2, APP_ID).then(function (sdk) {
   // Add a thread button
   sdk.Toolbars.registerThreadButton({
       title: "GMail External Search",
-      iconUrl: chrome.runtime.getURL("icons/128.png"),
+      iconUrl: chrome.runtime.getURL("icons/st128.png"),
       positions: ["ROW"],
       //listSection: sdk.Toolbars.SectionNames.OTHER,
       onClick: (event) => runSearchQueryFG(event, sdk)
