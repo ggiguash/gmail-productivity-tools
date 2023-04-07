@@ -1,9 +1,12 @@
 const input = document.getElementById('js-template');
-const form = document.getElementById('js-form');
 const message = document.getElementById('js-message');
-
-form.addEventListener('submit', saveSearchTemplate);
-
+const form = document.getElementById('js-form');
+if (form) {
+    form.addEventListener('submit', saveSearchTemplate);
+} else {
+    console.log('Failed to get js-form element reference');
+}
+  
 async function saveSearchTemplate(event) {
     event.preventDefault();
     const value = input.value.trim();
