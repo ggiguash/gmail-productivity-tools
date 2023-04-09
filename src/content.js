@@ -4,30 +4,81 @@ import * as InboxSDK from '@inboxsdk/core';
 const APP_ID = 'sdk_gmail-xsearch01_98bf02340a';
 
 InboxSDK.load(2, APP_ID).then(function (sdk) {
-  // Add a thread button
+  // Add a thread search button
   sdk.Toolbars.registerThreadButton({
-      title: "GMail External Search",
-      iconUrl: chrome.runtime.getURL("icons/st128.png"),
-      positions: ["ROW"],
-      //listSection: sdk.Toolbars.SectionNames.OTHER,
-      onClick: (event) => runSearchQueryFG(event, sdk)
+    title: "Search Thread",
+    iconUrl: chrome.runtime.getURL("icons/st128.png"),
+    positions: ["ROW"],
+    //listSection: sdk.Toolbars.SectionNames.OTHER,
+    onClick: (event) => runSearchQueryFG(event, sdk)
+  });
+
+  // Add a thread delete button
+  sdk.Toolbars.registerThreadButton({
+    title: "Delete Thread",
+    iconUrl: chrome.runtime.getURL("icons/dt128.png"),
+    positions: ["ROW"],
+    //listSection: sdk.Toolbars.SectionNames.OTHER,
+    onClick: (event) => runDeleteThreadFG(event, sdk)
   });
 });
 
-function runSearchQueryFG(event, sdk) {
+function getThreadDesc(event) {
   // Get the thread view of the event
   const threadView = event.selectedThreadRowViews ? event.selectedThreadRowViews[0] : null;
   if (!threadView) {
-      alert('No thread view for the selected event');
-      return;
+    alert('No thread view for the selected event');
+    return null;
   }
+
+  // Get the thread ID of the current view
+  const threadID = threadView.getThreadID();
+  if (!threadID) {
+    alert('No thread ID for the selected message thread');
+    return null;
+  }
+
   // Get the subject of the current view
   const strSubject = threadView.getSubject();
   if (!strSubject) {
-      alert('No subject for the selected message thread');
-      return;
-  }  
+    alert('No subject for the selected message thread');
+    return null;
+  }
+
+  return {
+    threadID: threadID,
+    strSubject: strSubject
+  };
+}
+
+function runSearchQueryFG(event, /*sdk*/) {
+  const threadDesc = getThreadDesc(event);
+  if (!threadDesc) {
+    return;
+  }
 
   // Send a message to the background page to run the search
-  chrome.runtime.sendMessage({subject: strSubject});
+  chrome.runtime.sendMessage({
+    action: "search",
+    threadID: threadDesc.threadID,
+    subject: threadDesc.strSubject
+  });
+}
+
+function runDeleteThreadFG(event, /*sdk*/) {
+  // if (!window.confirm('Do you really want to delete this thread?')) {
+  //   return;
+  // }
+
+  const threadDesc = getThreadDesc(event);
+  if (!threadDesc) {
+    return;
+  }
+
+  // Send a message to the background page to delete the thread
+  chrome.runtime.sendMessage({
+    action: "delete",
+    threadID: threadDesc.threadID,
+    subject: threadDesc.strSubject
+  });
 }

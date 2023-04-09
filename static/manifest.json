@@ -29,8 +29,7 @@
         "https://mail.google.com/*"
       ],
       "js": [
-        "content.js",
-        "config.js"
+        "content.js"
       ],
       "run_at": "document_end"
     }
@@ -41,7 +40,9 @@
   "permissions": [
     "scripting",
     "storage",
-    "tabs"
+    "tabs",
+    "activeTab",
+    "webRequest"
   ],
   "host_permissions": [
     "https://mail.google.com/"
