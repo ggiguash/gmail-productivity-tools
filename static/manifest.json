@@ -16,7 +16,6 @@
   "icons": {
     "16": "icons/ex16.png",
     "32": "icons/ex32.png",
-    "48": "icons/ex48.png",
     "64": "icons/ex64.png",
     "128": "icons/ex128.png"
   },
@@ -42,8 +41,16 @@
     "storage",
     "tabs",
     "activeTab",
-    "webRequest"
+    "webRequest",
+    "identity"
   ],
+  "oauth2": {
+    "client_id": "968953442546-hhmlqnv0dokc9jrnt2ded3vot91v9tg1.apps.googleusercontent.com",
+    "scopes": [
+      "https://mail.google.com/",
+      "https://www.googleapis.com/auth/gmail.modify"
+    ]
+  },
   "host_permissions": [
     "https://mail.google.com/"
   ]

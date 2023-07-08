@@ -19,11 +19,14 @@ chrome.runtime.onMessage.addListener(function (request/*, sender, sendResponse*/
     }
 
     // Process the message
-    switch(action) {
+    switch (action) {
         case 'search':
             runSearchQuery(threadID, strSubject);
             break;
-        case 'delete':
+        case 'open':
+            runOpenThread(threadID, strSubject);
+            break;
+            case 'delete':
             runDeleteThread(threadID, strSubject);
             break;
         default:
@@ -57,30 +60,51 @@ function runSearchQuery(threadID, strSubject) {
     });
 }
 
-function runDeleteThread(threadID, strSubject) {
+function runOpenThread(threadID, strSubject) {
     console.log('Opening thread:', threadID, 'with subject:', strSubject);
     const encSub = encodeURIComponent(strSubject);
     const newURL = 'https://mail.google.com/mail/u/0/#search/subject%3A"' + encSub + '"';
+
     // Open the thread search results in the current tab
     chrome.tabs.update({ url: newURL });
+}
 
-    //chrome.tabs.create({ url: newURL });
+function runDeleteThread(threadID, strSubject) {
+    console.log('Deleting thread:', threadID, 'with subject:', strSubject);
+    const encSub = encodeURIComponent(strSubject);
+    const newURL = 'https://mail.google.com/mail/u/0/#search/subject%3A"' + encSub + '"';
 
-    // const strQry = encodeURIComponent('subject:' + strSubject);
-    // const newURL = 'https://gmail.googleapis.com/gmail/v1/users/me/threads?q=' + strQry;
+    async function getCurrentTab() {
+        let queryOptions = { active: true, lastFocusedWindow: true };
+        let [tab] = await chrome.tabs.query(queryOptions);
+        return tab;
+    }
 
-    // fetch(newURL).then(function(res) {
-    //     if (res.status !== 200) {
-    //         console.log('Failed query:', res);
-    //         return;
-    //     }
-    //     console.log('Response:', res);
+    getCurrentTab().then((tab) => {
+        const savedURL = tab.url;
+        // Open the thread search results in the current tab to allow
+        // navigating back to the original tab URL
+        chrome.tabs.update({ url: newURL });
 
-    //     res.json().then(function(data) {
-    //         console.log('Data:', data);
-    //     });
+        chrome.identity.getAuthToken({ interactive: true }, function (token) {
+            const url = "https://gmail.googleapis.com/gmail/v1/users/me/threads/" + threadID + "/trash";
 
-    // }).catch(function(err) {
-    //     console.log('Error:', err);
-    // });
+            async function post() {
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    },
+                });
+                return response.json();
+            }
+            // Call the delete thread function
+            post().then((data) => {
+                // Navigate back to the saved tab URL for refreshing the view
+                console.log('Deleted thread:', threadID, 'with subject:', strSubject);
+                chrome.tabs.update({ url: savedURL });
+            });
+        });
+    });
 }

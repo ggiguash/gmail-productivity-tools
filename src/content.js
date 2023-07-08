@@ -13,6 +13,15 @@ InboxSDK.load(2, APP_ID).then(function (sdk) {
     onClick: (event) => runSearchQueryFG(event, sdk)
   });
 
+  // Add a thread open button
+  sdk.Toolbars.registerThreadButton({
+    title: "Open Thread",
+    iconUrl: chrome.runtime.getURL("icons/ot128.png"),
+    positions: ["ROW"],
+    //listSection: sdk.Toolbars.SectionNames.OTHER,
+    onClick: (event) => runOpenThreadFG(event, sdk)
+  });
+
   // Add a thread delete button
   sdk.Toolbars.registerThreadButton({
     title: "Delete Thread",
@@ -65,10 +74,24 @@ function runSearchQueryFG(event, /*sdk*/) {
   });
 }
 
-function runDeleteThreadFG(event, /*sdk*/) {
-  // if (!window.confirm('Do you really want to delete this thread?')) {
-  //   return;
-  // }
+function runOpenThreadFG(event, /*sdk*/) {
+  const threadDesc = getThreadDesc(event);
+  if (!threadDesc) {
+    return;
+  }
+
+  // Send a message to the background page to open the thread
+  chrome.runtime.sendMessage({
+    action: "open",
+    threadID: threadDesc.threadID,
+    subject: threadDesc.strSubject
+  });
+}
+
+function runDeleteThreadFG(event, sdk) {
+  if (!window.confirm('Do you really want to delete this thread?')) {
+    return;
+  }
 
   const threadDesc = getThreadDesc(event);
   if (!threadDesc) {
