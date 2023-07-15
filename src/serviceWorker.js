@@ -8,7 +8,7 @@ try {
 }
 
 // Register message listener
-chrome.runtime.onMessage.addListener(function (request/*, sender, sendResponse*/) {
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     // Get the message fields
     const action = request.action;
     const strSubject = request.subject;
@@ -26,9 +26,10 @@ chrome.runtime.onMessage.addListener(function (request/*, sender, sendResponse*/
         case 'open':
             runOpenThread(threadID, strSubject);
             break;
-            case 'delete':
-            runDeleteThread(threadID, strSubject);
-            break;
+        case 'delete':
+            // Return true to allow sending an async response
+            runDeleteThread(threadID, strSubject, sendResponse);
+            return true;
         default:
             console.log('Unsupported action:', action);
     }
@@ -69,42 +70,28 @@ function runOpenThread(threadID, strSubject) {
     chrome.tabs.update({ url: newURL });
 }
 
-function runDeleteThread(threadID, strSubject) {
+function runDeleteThread(threadID, strSubject, sendResponse) {
     console.log('Deleting thread:', threadID, 'with subject:', strSubject);
-    const encSub = encodeURIComponent(strSubject);
-    const newURL = 'https://mail.google.com/mail/u/0/#search/subject%3A"' + encSub + '"';
 
-    async function getCurrentTab() {
-        let queryOptions = { active: true, lastFocusedWindow: true };
-        let [tab] = await chrome.tabs.query(queryOptions);
-        return tab;
-    }
+    chrome.identity.getAuthToken({ interactive: true }, function (token) {
+        const url = "https://gmail.googleapis.com/gmail/v1/users/me/threads/" + threadID + "/trash";
 
-    getCurrentTab().then((tab) => {
-        const savedURL = tab.url;
-        // Open the thread search results in the current tab to allow
-        // navigating back to the original tab URL
-        chrome.tabs.update({ url: newURL });
-
-        chrome.identity.getAuthToken({ interactive: true }, function (token) {
-            const url = "https://gmail.googleapis.com/gmail/v1/users/me/threads/" + threadID + "/trash";
-
-            async function post() {
-                const response = await fetch(url, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer " + token
-                    },
-                });
-                return response.json();
-            }
-            // Call the delete thread function
-            post().then((data) => {
-                // Navigate back to the saved tab URL for refreshing the view
-                console.log('Deleted thread:', threadID, 'with subject:', strSubject);
-                chrome.tabs.update({ url: savedURL });
+        async function post() {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
             });
+            return response.json();
+        }
+
+        // Call the delete thread function
+        post().then((data) => {
+            console.log('Deleted thread:', threadID, 'with subject:', strSubject);
+            // Return response to the message sender to refresh the page
+            sendResponse(url);
         });
     });
 }

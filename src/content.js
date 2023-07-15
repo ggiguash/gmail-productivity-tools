@@ -2,6 +2,7 @@ import * as InboxSDK from '@inboxsdk/core';
 
 // Register the application ID at https://www.inboxsdk.com/register
 const APP_ID = 'sdk_gmail-xsearch01_98bf02340a';
+var currentListView = null;
 
 InboxSDK.load(2, APP_ID).then(function (sdk) {
   // Add a thread search button
@@ -29,6 +30,11 @@ InboxSDK.load(2, APP_ID).then(function (sdk) {
     positions: ["ROW"],
     //listSection: sdk.Toolbars.SectionNames.OTHER,
     onClick: (event) => runDeleteThreadFG(event, sdk)
+  });
+
+  sdk.Router.handleListRoute(sdk.Router.NativeListRouteIDs.ANY_LIST, function (routeView) {
+    // Save the current list view for potential refresh
+    currentListView = routeView;
   });
 });
 
@@ -88,7 +94,7 @@ function runOpenThreadFG(event, /*sdk*/) {
   });
 }
 
-function runDeleteThreadFG(event, sdk) {
+function runDeleteThreadFG(event, /*sdk*/) {
   if (!window.confirm('Do you really want to delete this thread?')) {
     return;
   }
@@ -99,9 +105,18 @@ function runDeleteThreadFG(event, sdk) {
   }
 
   // Send a message to the background page to delete the thread
-  chrome.runtime.sendMessage({
-    action: "delete",
-    threadID: threadDesc.threadID,
-    subject: threadDesc.strSubject
-  });
+  // Wait for the response to arrive after the deletion
+  (async () => {
+    const response = await chrome.runtime.sendMessage({
+      action: "delete",
+      threadID: threadDesc.threadID,
+      subject: threadDesc.strSubject
+    });
+
+    // Response contains the delete query URL
+    if (currentListView) {
+      console.log('Refreshing route:', currentListView.getRouteType(), 'after:', response);
+      currentListView.refresh();
+    }
+  })();
 }
