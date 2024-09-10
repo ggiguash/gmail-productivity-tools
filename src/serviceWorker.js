@@ -62,7 +62,6 @@ function runSearchQuery(threadID, strSubject) {
 }
 
 function runOpenThread(threadID, strSubject) {
-    console.log('Opening thread:', threadID, 'with subject:', strSubject);
     const encSub = encodeURIComponent(strSubject);
     const newURL = 'https://mail.google.com/mail/u/0/#search/subject%3A"' + encSub + '"';
 
@@ -71,27 +70,26 @@ function runOpenThread(threadID, strSubject) {
 }
 
 function runDeleteThread(threadID, strSubject, sendResponse) {
-    console.log('Deleting thread:', threadID, 'with subject:', strSubject);
-
     chrome.identity.getAuthToken({ interactive: true }, function (token) {
-        const url = "https://gmail.googleapis.com/gmail/v1/users/me/threads/" + threadID + "/trash";
-
-        async function post() {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + token
-                },
-            });
-            return response.json();
+        if (chrome.runtime.lastError) {
+            sendResponse({error: chrome.runtime.lastError.message});
+            return;
         }
 
-        // Call the delete thread function
-        post().then((data) => {
-            console.log('Deleted thread:', threadID, 'with subject:', strSubject);
+        const url = "https://gmail.googleapis.com/gmail/v1/users/me/threads/" + threadID + "/trash";
+        fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            }
+        })
+        .then(() => {
             // Return response to the message sender to refresh the page
-            sendResponse(url);
+            sendResponse({url: url});
+        })
+        .catch(error => {
+            sendResponse({error: error});
         });
     });
 }

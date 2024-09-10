@@ -113,10 +113,22 @@ function runDeleteThreadFG(event, /*sdk*/) {
       subject: threadDesc.strSubject
     });
 
-    // Response contains the delete query URL
+    if (!response) {
+      window.alert('Unknown error deleting thread');
+      return;
+    }
+
+    // Response contains the delete query URL or error
+    if (response.error) {
+      window.alert('Error deleting thread: ' + response.error);
+      return
+    }
+    console.log('Refreshing route:', currentListView.getRouteType(), 'after:', response);
+
     if (currentListView) {
-      console.log('Refreshing route:', currentListView.getRouteType(), 'after:', response);
       currentListView.refresh();
+    } else {
+      window.alert('Failed to refresh the current view');
     }
   })();
 }

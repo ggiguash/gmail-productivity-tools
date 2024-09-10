@@ -62,3 +62,29 @@ search icon in the toolbox area.
 
 Press the ![Search Icon](docs/search_icon.png) external search icon to open a new tab with
 the query results for the subject of the selected message.
+
+## Appendix A: GMail OAuth 2.0 Credentials
+
+It is necessary to create and configure `GMail OAuth 2.0` credentials to allow
+deletion of email threads.
+
+Start by creating a project (e.g. `GMail Productivity Tools`) and select it in the
+project drop down menu.
+
+Enable the `Gmail API` service:
+* Click on `APIs and services`
+* Click on `ENABLE APIS AND SERVICES`
+* Search for the `Gmail API` service and enable it for the project
+
+Browse to the `Credentials` menu and click on `CREATE CREDENTIALS` button. Select
+`OAuth client ID` in the dropdown list and enter the following data:
+* Enter `Chrome extension` as the `Application type`
+* Enter arbitrary `Name`
+* Enter the `Item ID` matching the extension `ID` presented at `chrome://extensions/`
+in `Developer Mode`
+
+Click on `CREATE` button and copy the generated `Client ID` to the `oauth2.client_id`
+field of the [manifest.json](./static/manifest.json) file.
+
+Browse to `OAuth consent screen` menu and select `ADD USERS` under `Test users`.
+Enter the mail of the user to be allowed to use the project in testing mode.
