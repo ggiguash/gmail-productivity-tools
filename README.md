@@ -50,7 +50,7 @@ substituted.
 
 For instance, the following query runs an email subject search in the Google Groups archives.
 ```
-https://groups.google.com/search/conversations?inOrg=true&q=subject%3A"${SUBJECT}"
+https://groups.google.com/search/conversations?inOrg=true&q="${SUBJECT}"
 ```
 
 ## Usage
